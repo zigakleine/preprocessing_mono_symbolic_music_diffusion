@@ -127,8 +127,8 @@ def lakh_encode(vae, db_proc, dir_to_save):
 
 current_dir = os.getcwd()
 
-# dir_to_save = "/storage/local/ssd/zigakleine-workspace"
-dir_to_save = os.getcwd()
+dir_to_save = "/storage/local/ssd/zigakleine-workspace"
+# dir_to_save = os.getcwd()
 
 model_rel_path = "cat-mel_2bar_big.tar"
 nesmdb_shared_library_rel_path = "ext_nseq_lakh_single_lib.so"

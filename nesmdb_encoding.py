@@ -166,8 +166,8 @@ def nesmdb_encode(transposition, transposition_plus, vae, db_proc, dir_to_save):
     return metadata, valid_sequences_counter
 
 
-# dir_to_save = "/storage/local/ssd/zigakleine-workspace"
-dir_to_save = os.getcwd()
+dir_to_save = "/storage/local/ssd/zigakleine-workspace"
+# dir_to_save = os.getcwd()
 
 transpositions = ((False, 5), (False, 4), (False, 3), (False, 2), (False, 1), (True, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5), (True, 6))
 
