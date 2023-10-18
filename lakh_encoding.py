@@ -61,9 +61,9 @@ def lakh_encode(vae, db_proc, dir_to_save):
             continue
 
 
-        temperature = 0.0002
-        total_steps = 32
-        total_acc = 0
+        # temperature = 0.0002
+        # total_steps = 32
+        # total_acc = 0
 
         z_melodies_all = []
         for song_data_sequence in song_data:
@@ -75,8 +75,10 @@ def lakh_encode(vae, db_proc, dir_to_save):
                     valid_melodies.append(i)
 
             song_data_melodies_ = [song_data_melodies[valid] for valid in valid_melodies]
-            z_melodies = vae.encode_sequence(song_data_melodies_)
-            z_melodies_all.extend(z_melodies)
+
+            if not (song_data_melodies_ == []):
+                z_melodies = vae.encode_sequence(song_data_melodies_)
+                z_melodies_all.extend(z_melodies)
 
             # song_data_decoded_ = vae.decode_sequence(z_melodies, total_steps, temperature)
             # compare_encoded_decoded = (np.array(song_data_decoded_) == np.array(song_data_melodies_))
@@ -86,6 +88,12 @@ def lakh_encode(vae, db_proc, dir_to_save):
 
         song_data_sequences = len(z_melodies_all)
         # print("accuracy-", (total_acc/len(song_data)))
+        if song_data_sequences == 0:
+            count += 1
+            print("unsuccessful")
+            metadata[song]["encodable"] = False
+            continue
+
         file = open(encoded_song_abs_path, 'wb')
         pickle.dump(z_melodies_all, file)
         file.close()
@@ -127,8 +135,8 @@ def lakh_encode(vae, db_proc, dir_to_save):
 
 current_dir = os.getcwd()
 
-dir_to_save = "/storage/local/ssd/zigakleine-workspace"
-# dir_to_save = os.getcwd()
+# dir_to_save = "/storage/local/ssd/zigakleine-workspace"
+dir_to_save = os.getcwd()
 
 model_rel_path = "cat-mel_2bar_big.tar"
 nesmdb_shared_library_rel_path = "ext_nseq_lakh_single_lib.so"
