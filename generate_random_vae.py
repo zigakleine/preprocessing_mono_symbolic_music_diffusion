@@ -46,9 +46,12 @@ for i in range(100):
     uuid_string = str(uuid.uuid4())
     song_num = i
 
-    z = np.random.randn(batch_size_latents*4, latent_space_dims).astype(np.float32)
-    song_data_eval = vae.decode_sequence(z, total_steps, temperature)
-    song_data_survey = song_data_eval[:, :15*16]
+    z = np.random.randn(1, batch_size_latents, latent_space_dims).astype(np.float32)
+    melody_eval = vae.decode_sequence(z, total_steps, temperature)[0]
+    melody_survey = melody_eval[:15*16]
+
+    song_data_eval = db_proc.song_from_melody(melody_eval)
+    song_data_survey = db_proc.song_from_melody(melody_survey)
 
     midi_eval_output_path = os.path.join(vae_eval_out_dir, "eval_vae_" + str(song_num) + ".mid")
     midi_survey_output_path = os.path.join(vae_survey_out_dir, uuid_string + ".mid")
@@ -58,3 +61,5 @@ for i in range(100):
 
     generated_midi_eval.save(midi_eval_output_path)
     generated_midi_survey.save(midi_survey_output_path)
+
+    print(song_num)

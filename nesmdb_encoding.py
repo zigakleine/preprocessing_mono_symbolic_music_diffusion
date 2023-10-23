@@ -61,6 +61,8 @@ def nesmdb_encode(transposition, transposition_plus, vae, db_proc, dir_to_save):
         songs = metadata[game]["songs"]
         for song in songs:
 
+
+
             all_songs_counter += 1
 
             is_encodable = song["is_encodable"]
@@ -71,6 +73,11 @@ def nesmdb_encode(transposition, transposition_plus, vae, db_proc, dir_to_save):
 
             if not is_encodable:
                 continue
+            #
+            # if song_rel_path == "nesmdb_flat/322_SuperMarioBros__00_01RunningAbout.mid":
+            #     print("hehe")
+            # else:
+            #     continue
 
             p1_file_name = "song" + str(song["number"] - 1) + "*" + transposition_sign + str(
                 transposition) + "*" + "p1" + ".pkl"
@@ -166,8 +173,8 @@ def nesmdb_encode(transposition, transposition_plus, vae, db_proc, dir_to_save):
     return metadata, valid_sequences_counter
 
 
-dir_to_save = "/storage/local/ssd/zigakleine-workspace"
-# dir_to_save = os.getcwd()
+# dir_to_save = "/storage/local/ssd/zigakleine-workspace"
+dir_to_save = os.getcwd()
 
 transpositions = ((False, 5), (False, 4), (False, 3), (False, 2), (False, 1), (True, 0), (True, 1), (True, 2), (True, 3), (True, 4), (True, 5), (True, 6))
 
@@ -188,6 +195,9 @@ vae = singletrack_vae(model_path, batch_size)
 all_valid_sequences_num = 0
 
 for transposition_plus, transposition in transpositions:
+
+    transposition_plus = True
+    transposition = 0
 
     metadata, valid_sequences_num = nesmdb_encode(transposition, transposition_plus, vae, db_proc, dir_to_save)
     all_valid_sequences_num += valid_sequences_num

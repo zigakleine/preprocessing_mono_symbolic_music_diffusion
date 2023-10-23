@@ -6,6 +6,7 @@ import re
 import time
 from singletrack_VAE import db_processing
 import uuid
+import random
 
 current_dir = os.getcwd()
 nesmdb_shared_library_rel_path = "ext_nseq_nesmdb_single_lib.so"
@@ -37,8 +38,9 @@ for game in metadata:
             is_looping = song["is_looping"]
             num_sequences = song["num_sequences"]
             for i in range(num_sequences):
-                song_dict = {"url": song_url, "is_looping": is_looping, "index": i}
-                songs.append(song_dict)
+                for inst in range(2):
+                    song_dict = {"url": song_url, "is_looping": is_looping, "index": i, "inst": inst}
+                    songs.append(song_dict)
 
 
 valid_songs = len(songs)
@@ -46,23 +48,32 @@ songs_to_sample = 100
 song_min_measures = 32
 num_tracks = 4
 
-sample_songs_idxs = np.random.choice(valid_songs, songs_to_sample, replace=False)
 sample_songs = []
 
 song_num = 0
+songs_generated_num = 0
+songs_generated = []
 
-for i in sample_songs_idxs:
-    uuid_string = str(uuid.uuid4())
+while songs_generated_num < songs_to_sample:
+    random_song_idx = random.randrange(valid_songs)
 
-    song_dict = songs[i]
+    if random_song_idx in songs_generated:
+        continue
+
+    song_dict = songs[random_song_idx]
+    song_inst = song_dict["inst"]
     song_url = song_dict["url"]
     is_looping = song_dict["is_looping"]
     index = song_dict["index"]
 
+    uuid_string = str(uuid.uuid4())
+
     song_url_abs = os.path.join(current_dir, song_url)
     song_data = db_proc.song_from_midi_nesmdb(song_url_abs, 0, True)
-
     song_measures = song_data.shape[1] // 16
+    if song_measures <= 4:
+        continue
+
     song_data_extended = []
 
     if song_measures < song_min_measures:
@@ -82,16 +93,69 @@ for i in sample_songs_idxs:
 
     num_batches = (song_data_extended.shape[1]//16) // song_min_measures
 
-    song_data_eval = song_data_extended[:, (index*16*32):((index+1)*16*32)]
-    song_data_survey = song_data_eval[:, :15*16]
+    melody_eval = song_data_extended[inst, (index*16*32):((index+1)*16*32)]
+    melody_survey = melody_eval[:15*16]
 
-    midi_eval_output_path = os.path.join(real_eval_out_dir, "eval_real_" + str(song_num) + ".mid")
+    if not np.any(melody_eval):
+        continue
+
+    song_data_eval = db_proc.song_from_melody(melody_eval)
+    song_data_survey = db_proc.song_from_melody(melody_survey)
+
+    midi_eval_output_path = os.path.join(real_eval_out_dir, "eval_real_" + str(songs_generated_num) + ".mid")
     midi_survey_output_path = os.path.join(real_survey_out_dir, uuid_string + ".mid")
-    song_num += 1
+
     generated_midi_eval = db_proc.midi_from_song(song_data_eval)
     generated_midi_survey = db_proc.midi_from_song(song_data_survey)
 
     generated_midi_eval.save(midi_eval_output_path)
     generated_midi_survey.save(midi_survey_output_path)
+
+    songs_generated_num += 1
+    songs_generated.append(random_song_idx)
+    print(songs_generated_num)
+
+# for i in sample_songs_idxs:
+#     uuid_string = str(uuid.uuid4())
+#
+#     song_dict = songs[i]
+#     song_url = song_dict["url"]
+#     is_looping = song_dict["is_looping"]
+#     index = song_dict["index"]
+#
+#     song_url_abs = os.path.join(current_dir, song_url)
+#     song_data = db_proc.song_from_midi_nesmdb(song_url_abs, 0, True)
+#
+#     song_measures = song_data.shape[1] // 16
+#     song_data_extended = []
+#
+#     if song_measures < song_min_measures:
+#         if is_looping:
+#             for i in range(song_min_measures * 16):
+#                 song_data_extended.append(song_data[:, i % (song_measures * 16)])
+#             song_data_extended = np.vstack(song_data_extended).T
+#     else:
+#         if is_looping:
+#             new_length_measures = ((song_measures // song_min_measures + 1) * song_min_measures)
+#             for i in range(new_length_measures * 16):
+#                 song_data_extended.append(song_data[:, i % (song_measures * 16)])
+#             song_data_extended = np.vstack(song_data_extended).T
+#         else:
+#             new_length_measures = ((song_measures // song_min_measures) * song_min_measures)
+#             song_data_extended = song_data[:, :new_length_measures * 16]
+#
+#     num_batches = (song_data_extended.shape[1]//16) // song_min_measures
+#
+#     song_data_eval = song_data_extended[:, (index*16*32):((index+1)*16*32)]
+#     song_data_survey = song_data_eval[:, :15*16]
+#
+#     midi_eval_output_path = os.path.join(real_eval_out_dir, "eval_real_" + str(song_num) + ".mid")
+#     midi_survey_output_path = os.path.join(real_survey_out_dir, uuid_string + ".mid")
+#     song_num += 1
+#     generated_midi_eval = db_proc.midi_from_song(song_data_eval)
+#     generated_midi_survey = db_proc.midi_from_song(song_data_survey)
+#
+#     generated_midi_eval.save(midi_eval_output_path)
+#     generated_midi_survey.save(midi_survey_output_path)
 
 
